@@ -180,9 +180,11 @@ Before uploading, inspect the screenshot for sensitive data: tokens, passwords, 
 #### Upload
 
 ```bash
-# Generate unique filename: {YYYYMMDD}-{uuid-short}.{ext}
-FILENAME="$(date +%Y%m%d)-$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]').jpg"
-aws s3 cp /path/to/image.jpg "s3://attachments.riasistemas.com.br/github-issues/${FILENAME}"
+# Extract real extension from source file
+FILE="/path/to/image.png"
+EXT="${FILE##*.}"
+FILENAME="$(date +%Y%m%d)-$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]').${EXT}"
+aws s3 cp "${FILE}" "s3://attachments.riasistemas.com.br/github-issues/${FILENAME}"
 ```
 
 Verify the upload is accessible:
