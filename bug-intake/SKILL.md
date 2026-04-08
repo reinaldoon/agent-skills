@@ -162,32 +162,48 @@ Use only labels that already exist. Common candidates: `bug`, `needs-triage`, `s
 
 If the bug report includes screenshots or images, upload them to S3 before creating the issue.
 
+**Pre-requisite:** AWS CLI configured with `s3:PutObject` permission on the bucket.
+
 **Bucket:** `s3://attachments.riasistemas.com.br/github-issues/`
 **Public URL:** `https://attachments.riasistemas.com.br/github-issues/`
 
+#### PII check (mandatory before upload)
+
+Before uploading, inspect the screenshot for sensitive data: tokens, passwords, CPF, client names, OAB numbers, process numbers, financial data. If PII is present, describe the evidence textually instead of uploading.
+
+#### Validation
+
+- Allowed extensions: `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`
+- Maximum file size: 10MB
+- If file fails validation, describe textually and add label `needs-screenshot`
+
+#### Upload
+
 ```bash
-# Upload image — filename pattern: {issue-number}-{short-description}.{ext}
-# If issue number is unknown yet, use timestamp: {YYYYMMDD}-{short-description}.{ext}
-aws s3 cp /path/to/image.jpg s3://attachments.riasistemas.com.br/github-issues/{filename}
+# Generate unique filename: {YYYYMMDD}-{uuid-short}.{ext}
+FILENAME="$(date +%Y%m%d)-$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]').jpg"
+aws s3 cp /path/to/image.jpg "s3://attachments.riasistemas.com.br/github-issues/${FILENAME}"
 ```
 
 Verify the upload is accessible:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}" "https://attachments.riasistemas.com.br/github-issues/{filename}"
+curl -s -o /dev/null -w "%{http_code}" "https://attachments.riasistemas.com.br/github-issues/${FILENAME}"
 ```
 
 Reference in the issue body under Evidence:
 
 ```md
 ## Evidence
-- Screenshot: ![description](https://attachments.riasistemas.com.br/github-issues/{filename})
+- Screenshot: ![description](https://attachments.riasistemas.com.br/github-issues/{FILENAME})
 ```
 
-**Rules:**
+#### Rules
+
 - Never commit images to the git repository
 - Always use S3 for image hosting
-- If `aws s3 cp` fails, note the local path in the issue and instruct the reporter to attach manually
+- Always check for PII before uploading
+- If `aws s3 cp` fails, describe the evidence textually and add label `needs-screenshot`
 
 ### Step 7 — Create the issue
 
