@@ -158,7 +158,38 @@ gh label list
 
 Use only labels that already exist. Common candidates: `bug`, `needs-triage`, `source:cs`, `frontend`, `backend`, `api`, `infra`. Never invent labels.
 
-### Step 6 — Create the issue
+### Step 6 — Upload images
+
+If the bug report includes screenshots or images, upload them to S3 before creating the issue.
+
+**Bucket:** `s3://attachments.riasistemas.com.br/github-issues/`
+**Public URL:** `https://attachments.riasistemas.com.br/github-issues/`
+
+```bash
+# Upload image — filename pattern: {issue-number}-{short-description}.{ext}
+# If issue number is unknown yet, use timestamp: {YYYYMMDD}-{short-description}.{ext}
+aws s3 cp /path/to/image.jpg s3://attachments.riasistemas.com.br/github-issues/{filename}
+```
+
+Verify the upload is accessible:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" "https://attachments.riasistemas.com.br/github-issues/{filename}"
+```
+
+Reference in the issue body under Evidence:
+
+```md
+## Evidence
+- Screenshot: ![description](https://attachments.riasistemas.com.br/github-issues/{filename})
+```
+
+**Rules:**
+- Never commit images to the git repository
+- Always use S3 for image hosting
+- If `aws s3 cp` fails, note the local path in the issue and instruct the reporter to attach manually
+
+### Step 7 — Create the issue
 
 ```bash
 cat > /tmp/bug-report.md <<'EOF'
